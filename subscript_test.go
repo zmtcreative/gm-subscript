@@ -292,6 +292,11 @@ func TestSubscriptCore(t *testing.T) {
 			md: `Foo~1,2~ + Bar~(test)~ - Baz~[abc]~ * Quux~{xyz}~ < Zzz~<tag>~`,
 			html: `<p>Foo<sub>1,2</sub> + Bar<sub>(test)</sub> - Baz<sub>[abc]</sub> * Quux<sub>{xyz}</sub> &lt; Zzz<sub>&lt;tag&gt;</sub></p>`,
 		},
+		{
+			desc: "Subscript: cannot be preceded by whitespace",
+			md: `NH~4~ with ~subscript~ and ~~strikethrough~~`,
+			html: `<p>NH<sub>4</sub> with <del>subscript</del> and <del>strikethrough</del></p>`,
+		},
 		// {
 		// 	desc: "",
 		// 	md: ``,
