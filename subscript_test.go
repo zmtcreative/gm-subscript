@@ -74,15 +74,30 @@ func TestGoldmarkOnly(t *testing.T) {
 			html: `<p>H~  2~O</p>`,
 		},
 		{
-			desc: "Goldmark only: no leading spaces inside strikethrough",
+			desc: "Goldmark only: spaces inside strikethrough",
 			md: `H~2 abc~O`,
 			html: `<p>H<del>2 abc</del>O</p>`,
 		},
-		// {
-		// 	desc: "",
-		// 	md: ``,
-		// 	html: ``,
-		// },
+		{
+			desc: "Goldmark only: markdown inside strikethrough (missing word boundaries)",
+			md: `H~**2**~O`,
+			html: `<p>H~<strong>2</strong>~O</p>`,
+		},
+		{
+			desc: "Goldmark only: markdown outside strikethrough (missing word boundaries)",
+			md: `H**~~2~~**O`,
+			html: `<p>H**<del>2</del>**O</p>`,
+		},
+		{
+			desc: "Goldmark only: markdown inside strikethrough (strong)",
+			md: `H ~**2**~ O`,
+			html: `<p>H <del><strong>2</strong></del> O</p>`,
+		},
+		{
+			desc: "Goldmark only: markdown outside strikethrough (strong)",
+			md: `H **~~2~~** O`,
+			html: `<p>H <strong><del>2</del></strong> O</p>`,
+		},
 		// {
 		// 	desc: "",
 		// 	md: ``,
@@ -120,6 +135,61 @@ func TestSubscriptCore(t *testing.T) {
 			desc: "Subscript: basic test",
 			md: `H~2~O`,
 			html: `<p>H<sub>2</sub>O</p>`,
+		},
+		{
+			desc: "Subscript: Subscript with special characters",
+			md: `Text~!@#$%^&*()~end`,
+			html: `<p>Text<sub>!@#$%^&amp;*()</sub>end</p>`,
+		},
+		{
+			desc: "Subscript: Subscript with punctuation",
+			md: `Formula~.,;:'"?/\\~value`,
+			html: `<p>Formula<sub>.,;:'&quot;?/\</sub>value</p>`,
+		},
+		{
+			desc: "Subscript: Subscript with mixed symbols",
+			md: `Test~abc123!@#~end`,
+			html: `<p>Test<sub>abc123!@#</sub>end</p>`,
+		},
+		{
+			desc: "Subscript: Subscript starting with symbol",
+			md: `Word~!test~end`,
+			html: `<p>Word<sub>!test</sub>end</p>`,
+		},
+		{
+			desc: "Subscript: Subscript starting with number",
+			md: `Value~123abc~end`,
+			html: `<p>Value<sub>123abc</sub>end</p>`,
+		},
+		{
+			desc: "Subscript: Subscript starting with punctuation",
+			md: `Text~.dot~end`,
+			html: `<p>Text<sub>.dot</sub>end</p>`,
+		},
+		{
+			desc: "Subscript: Empty subscript should not parse",
+			md: `Test~~end`,
+			html: `<p>Test~~end</p>`,
+		},
+		{
+			desc: "Subscript: Subscript with tilde inside should terminate at first tilde",
+			md: `Test~abc~def~end`,
+			html: `<p>Test<sub>abc</sub>def~end</p>`,
+		},
+		{
+			desc: "Subscript: Unicode characters allowed",
+			md: `Text~αβγ123~end`,
+			html: `<p>Text<sub>αβγ123</sub>end</p>`,
+		},
+		{
+			desc: "Subscript: Emoji and special Unicode",
+			md: `Test~🚀⭐️123~end`,
+			html: `<p>Test<sub>🚀⭐️123</sub>end</p>`,
+		},
+		{
+			desc: "Subscript: HTML-like tags inside subscript",
+			md: `Test~<tag>content</tag>~end`,
+			html: `<p>Test<sub>&lt;tag&gt;content&lt;/tag&gt;</sub>end</p>`,
 		},
 		{
 			desc: "Subscript: basic test with dbl-tilde strikethrough",
@@ -227,11 +297,6 @@ func TestSubscriptCore(t *testing.T) {
 		// 	md: ``,
 		// 	html: ``,
 		// },
-		// {
-		// 	desc: "",
-		// 	md: ``,
-		// 	html: ``,
-		// },
 	}
 
 	for _, tc := range testCases {
@@ -303,6 +368,57 @@ func TestSubscriptHTMLEntities(t *testing.T) {
 		// 	md: ``,
 		// 	html: ``,
 		// },
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			testutil.DoTestCase(mdTest, testutil.MarkdownTestCase{
+				Description: tc.desc,
+				Markdown:    tc.md,
+				Expected:    tc.html,
+			}, t)
+		})
+	}
+
+}
+
+func TestSubscriptOther(t *testing.T) {
+	// Because extension.GFM enables strikethrough by default, we need to include it here.
+	// If we don't, we won't be doing a reliable test to make sure subscript and
+	// strikethrough work together properly.
+	mdTest := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.DefinitionList,
+			extension.Footnote,
+			NewSubscript(),
+		),
+		goldmark.WithRendererOptions(
+			html.WithUnsafe(),
+		),
+	)
+
+	testCases := []TestCase{
+		{
+			desc: "Subscript inside markdown emphasis: without proper word boundaries",
+			md: `Foo**~b~**_~i~_ + Bar*~test~*`,
+			html: `<p>Foo**<sub>b</sub>**<em><sub>i</sub></em> + Bar*<sub>test</sub>*</p>`,
+		},
+		{
+			desc: "Subscript inside markdown emphasis: with proper word boundaries",
+			md: `Foo **~b~**_~i~_ + Bar *~test~*`,
+			html: `<p>Foo <strong><sub>b</sub></strong><em><sub>i</sub></em> + Bar <em><sub>test</sub></em></p>`,
+		},
+		{
+			desc: "Embedded HTML: not allowed inside subscript",
+			md: `Foo~<strong>b</strong><em>i</em>~ + Bar~<em>test</em>~`,
+			html: `<p>Foo<sub>&lt;strong&gt;b&lt;/strong&gt;&lt;em&gt;i&lt;/em&gt;</sub> + Bar<sub>&lt;em&gt;test&lt;/em&gt;</sub></p>`,
+		},
+		{
+			desc: "Embedded Subscript: allowed inside HTML tags",
+			md: `Foo<strong>~b~</strong><em>~i~</em> + Bar<em>~test~</em>`,
+			html: `<p>Foo<strong><sub>b</sub></strong><em><sub>i</sub></em> + Bar<em><sub>test</sub></em></p>`,
+		},
 		// {
 		// 	desc: "",
 		// 	md: ``,
