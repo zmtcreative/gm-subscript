@@ -143,12 +143,12 @@ func TestSubscriptCore(t *testing.T) {
 		{
 			desc: "Subscript: glucose formula with single-tilde strikethrough with spaces",
 			md: `C~6~H~12~O~6~ ~is not~ is critical for life`,
-			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> <del>is not</del> critical for life</p>`,
+			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> <del>is not</del> is critical for life</p>`,
 		},
 		{
 			desc: "Subscript: glucose formula with single-tilde strikethrough with spaces",
 			md: `C~6~H~12~O~6~ ~~is not~~ is critical for life`,
-			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> <del>is not</del> critical for life</p>`,
+			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> <del>is not</del> is critical for life</p>`,
 		},
 		{
 			desc: "Subscript: glucose formula with dbl-tilde strikethrough",
