@@ -175,6 +175,37 @@ func TestSubscriptCore(t *testing.T) {
 			md: `H~2 abc~O`,
 			html: `<p>H<del>2 abc</del>O</p>`,
 		},
+		{
+			desc: "Subscript: subscript cannot start at beginning of line",
+			md: `~2~O`,
+			html: `<p><del>2</del>O</p>`,
+		},
+		{
+			desc: "Subscript: subscript must have non-whitespace before it",
+			md: `H ~2~ O`,
+			html: `<p>H <del>2</del> O</p>`,
+		},
+		{
+			// NOTE: This is the correct output! Subscripts cannot have spaces inside them,
+			// so the '~6 ' is invalid, and since strikethrough doesn't allow trailing spaces, it
+			// just renders as '~6 ' in the output.
+			// Now, the '~H~' is not a valid subscript (it cannot be preceded by whitespace), so it
+			// gets rendered as a strikethrough.
+			// Next, the ' 12' is just normal text at this point, so it is rendered as normal text.
+			// Then, the '~O~' (which is preceded by the '2') is a valid subscript, so it gets rendered as such.
+			// Finally, the ' 6 ~' is just normal text at this point, so is rendered as normal text.
+			desc: "Subscript: glucose formula with spaces inside subscript",
+			md: `C~6 ~H~ 12~O~ 6 ~`,
+			html: `<p>C~6 <del>H</del> 12<sub>O</sub> 6 ~</p>`,
+		},
+		{
+			// NOTE: This is the correct output! Subscripts cannot have spaces inside them,
+			// so this gets treated similar to the last test case, except the outer strikethrough
+			// gets processed and strikes through everything inside it, even the valid subscript.
+			desc: "Subscript: glucose formula with spaces inside subscript",
+			md: `~~C~6 ~H~ 12~O~ 6~~`,
+			html: `<p><del>C~6 <del>H</del> 12<sub>O</sub> 6</del></p>`,
+		},
 		// {
 		// 	desc: "Subscript: cannot have spaces inside subscript anywhere",
 		// 	md: `C~6 0~H~12 a1~O~ 6 ~ ~is not~ is critical for life`,
