@@ -62,6 +62,21 @@ func TestGoldmarkOnly(t *testing.T) {
 			md: `**C~6~H~12~O~6~**`,
 			html: `<p><strong>C<del>6</del>H<del>12</del>O<del>6</del></strong></p>`,
 		},
+		{
+			desc: "Goldmark only: no trailing spaces inside strikethrough",
+			md: `H~2 ~O`,
+			html: `<p>H~2 ~O</p>`,
+		},
+		{
+			desc: "Goldmark only: no leading spaces inside strikethrough",
+			md: `H~  2~O`,
+			html: `<p>H~  2~O</p>`,
+		},
+		{
+			desc: "Goldmark only: no leading spaces inside strikethrough",
+			md: `H~2 abc~O`,
+			html: `<p>H<del>2 abc</del>O</p>`,
+		},
 		// {
 		// 	desc: "",
 		// 	md: ``,
@@ -131,6 +146,11 @@ func TestSubscriptCore(t *testing.T) {
 			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> <del>is not</del> critical for life</p>`,
 		},
 		{
+			desc: "Subscript: glucose formula with single-tilde strikethrough with spaces",
+			md: `C~6~H~12~O~6~ ~~is not~~ is critical for life`,
+			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> <del>is not</del> critical for life</p>`,
+		},
+		{
 			desc: "Subscript: glucose formula with dbl-tilde strikethrough",
 			md: `C~6~H~12~O~6~ is ~~not~~ critical for life`,
 			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> is <del>not</del> critical for life</p>`,
@@ -141,10 +161,25 @@ func TestSubscriptCore(t *testing.T) {
 			html: `<p><strong>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub></strong> is <strong>critical</strong> for life</p>`,
 		},
 		{
-			desc: "Subscript: cannot have spaces inside subscript anywhere",
-			md: `C~6 0~H~12 a1~O~ 6 ~ ~is not~ is critical for life`,
-			html: `<p>C<del>6 0</del>H<del>12 a1</del>O~ 6 ~ <del>is not</del> is critical for life</p>`,
+			desc: "Subscript: no trailing spaces inside subscript OR strikethrough",
+			md: `H~2 ~O`,
+			html: `<p>H~2 ~O</p>`,
 		},
+		{
+			desc: "Subscript: no leading spaces inside subscript OR strikethrough",
+			md: `H~ 2~O`,
+			html: `<p>H~ 2~O</p>`,
+		},
+		{
+			desc: "Subscript: no spaces inside subscript (treat as strikethrough)",
+			md: `H~2 abc~O`,
+			html: `<p>H<del>2 abc</del>O</p>`,
+		},
+		// {
+		// 	desc: "Subscript: cannot have spaces inside subscript anywhere",
+		// 	md: `C~6 0~H~12 a1~O~ 6 ~ ~is not~ is critical for life`,
+		// 	html: `<p>C<del>6 0</del>H<del>12 a1</del>O~ 6 ~ <del>is not</del> is critical for life</p>`,
+		// },
 		// {
 		// 	desc: "",
 		// 	md: ``,
