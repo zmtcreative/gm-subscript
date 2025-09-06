@@ -1,3 +1,20 @@
+// Package subscript provides a Goldmark extension for rendering subscripts using single-tilde syntax.
+//
+// This extension allows content between single tildes (~text~) to be rendered as HTML subscripts (<sub>text</sub>),
+// while preserving compatibility with Goldmark's strikethrough extension which uses double tildes (~~text~~).
+//
+// Usage:
+//
+//	md := goldmark.New(
+//		goldmark.WithExtensions(
+//			subscript.NewSubscript(),
+//		),
+//	)
+//
+// The extension follows these parsing rules:
+//   - Subscripts must not start at the beginning of a line or after whitespace
+//   - Content between tildes cannot contain spaces or additional tildes
+//   - Empty subscripts (~~ with no content) are not parsed as subscripts
 package subscript
 
 import (
@@ -15,7 +32,7 @@ import (
 // KindSubscript is a NodeKind of the Subscript node.
 var KindSubscript = ast.NewNodeKind("Subscript")
 
-// Node struct represents a subscript node.
+// Node represents a subscript node in the AST.
 type Node struct {
 	ast.BaseInline
 }
@@ -35,7 +52,7 @@ func NewSubscriptNode() *Node {
 	return &Node{}
 }
 
-// subscriptParser is an inline parser for subscript.
+// subscriptParser implements parser.InlineParser for subscript syntax.
 type subscriptParser struct {
 }
 
@@ -133,12 +150,12 @@ func (s *subscriptParser) CloseBlock(parent ast.Node, pc parser.Context) {
 	// nothing to do
 }
 
-// SubscriptHTMLRenderer is a renderer.NodeRenderer implementation that renders Subscript nodes.
+// SubscriptHTMLRenderer renders Subscript nodes to HTML <sub> elements.
 type SubscriptHTMLRenderer struct {
 	html.Config
 }
 
-// NewSubscriptHTMLRenderer returns a new SubscriptHTMLRenderer.
+// NewSubscriptHTMLRenderer returns a new SubscriptHTMLRenderer with the given options.
 func NewSubscriptHTMLRenderer(opts ...html.Option) renderer.NodeRenderer {
 	r := &SubscriptHTMLRenderer{
 		Config: html.NewConfig(),
@@ -155,6 +172,7 @@ func (r *SubscriptHTMLRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegis
 }
 
 // SubscriptAttributeFilter defines attribute names which subscript elements can have.
+// Uses the global HTML attribute filter for consistency with other HTML elements.
 var SubscriptAttributeFilter = html.GlobalAttributeFilter
 
 func (r *SubscriptHTMLRenderer) renderSubscript(
@@ -173,12 +191,16 @@ func (r *SubscriptHTMLRenderer) renderSubscript(
 	return ast.WalkContinue, nil
 }
 
+// subscript implements goldmark.Extender for the subscript extension.
 type subscript struct{}
 
+// SubscriptOption configures the subscript extension.
 type SubscriptOption func(*subscript)
 
+// Subscript is a pre-configured subscript extension instance.
 var Subscript = NewSubscript()
 
+// NewSubscript creates a new subscript extension with the given options.
 func NewSubscript(opts ...SubscriptOption) *subscript {
 	s := &subscript{}
 	for _, opt := range opts {
@@ -187,6 +209,7 @@ func NewSubscript(opts ...SubscriptOption) *subscript {
 	return s
 }
 
+// Extend implements goldmark.Extender by adding subscript parsing and rendering to the markdown processor.
 func (s *subscript) Extend(m goldmark.Markdown) {
 	m.Parser().AddOptions(parser.WithInlineParsers(
 		util.Prioritized(NewSubscriptParser(), 100),
