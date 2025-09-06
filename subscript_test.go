@@ -1,0 +1,170 @@
+package subscript
+
+import (
+	"testing"
+
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/testutil"
+)
+
+type TestCase struct {
+	desc string
+	md   string
+	html string
+}
+
+func TestGoldmarkOnly(t *testing.T) {
+	// These tests are to show how Goldmark handles strikethrough by default,
+	// without our extension enabled.
+	mdTest := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.DefinitionList,
+			extension.Footnote,
+			// NewSubscript(),
+		),
+	)
+
+	testCases := []TestCase{
+		{
+			desc: "Goldmark only: single-tilde strikethrough",
+			md: `H~2~O`,
+			html: `<p>H<del>2</del>O</p>`,
+		},
+		{
+			desc: "Goldmark only: single-tilde and dbl-tilde strikethrough",
+			md: `H~2~O with a ~~del~~ strikethrough`,
+			html: `<p>H<del>2</del>O with a <del>del</del> strikethrough</p>`,
+		},
+		{
+			desc: "Goldmark only: glucose formula",
+			md: `C~6~H~12~O~6~`,
+			html: `<p>C<del>6</del>H<del>12</del>O<del>6</del></p>`,
+		},
+		{
+			desc: "Goldmark only: glucose formula with dbl-tilde strikethrough",
+			md: `C~6~H~12~O~6~ is ~~not~~ critical for life`,
+			html: `<p>C<del>6</del>H<del>12</del>O<del>6</del> is <del>not</del> critical for life</p>`,
+		},
+		{
+			desc: "Goldmark only: glucose formula with single-tilde strikethrough with spaces",
+			md: `C~6~H~12~O~6~ ~is not~ is critical for life`,
+			html: `<p>C<del>6</del>H<del>12</del>O<del>6</del> <del>is not</del> is critical for life</p>`,
+		},
+		{
+			desc: "Goldmark only: glucose formula with spaces inner, leading and trailing spaces",
+			md: `C~6 0~H~12 a1 ~O~ 6 ~ ~is not~ is critical for life`,
+			html: `<p>C<del>6 0</del>H~12 a1 <del>O</del> 6 ~ <del>is not</del> is critical for life</p>`,
+		},
+		{
+			desc: "Goldmark only: glucose formula with emphasis (strong)",
+			md: `**C~6~H~12~O~6~**`,
+			html: `<p><strong>C<del>6</del>H<del>12</del>O<del>6</del></strong></p>`,
+		},
+		// {
+		// 	desc: "",
+		// 	md: ``,
+		// 	html: ``,
+		// },
+		// {
+		// 	desc: "",
+		// 	md: ``,
+		// 	html: ``,
+		// },
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			testutil.DoTestCase(mdTest, testutil.MarkdownTestCase{
+				Description: tc.desc,
+				Markdown:    tc.md,
+				Expected:    tc.html,
+			}, t)
+		})
+	}
+
+}
+
+func TestSubscriptCore(t *testing.T) {
+	// Because extension.GFM enables strikethrough by default, we need to include it here.
+	// If we don't, we won't be doing a reliable test to make sure subscript and
+	// strikethrough work together properly.
+	mdTest := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.DefinitionList,
+			extension.Footnote,
+			NewSubscript(),
+		),
+	)
+
+	testCases := []TestCase{
+		{
+			desc: "Subscript: basic test",
+			md: `H~2~O`,
+			html: `<p>H<sub>2</sub>O</p>`,
+		},
+		{
+			desc: "Subscript: basic test with dbl-tilde strikethrough",
+			md: `H~2~O with a ~~del~~ strikethrough`,
+			html: `<p>H<sub>2</sub>O with a <del>del</del> strikethrough</p>`,
+		},
+		{
+			desc: "Subscript: glucose formula",
+			md: `C~6~H~12~O~6~`,
+			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub></p>`,
+		},
+		{
+			desc: "Subscript: glucose formula with dbl-tilde strikethrough",
+			md: `C~6~H~12~O~6~ is ~~not~~ critical for life`,
+			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> is <del>not</del> critical for life</p>`,
+		},
+		{
+			desc: "Subscript: glucose formula with single-tilde strikethrough",
+			md: `C~6~H~12~O~6~ is ~not~ critical for life`,
+			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> is <del>not</del> critical for life</p>`,
+		},
+		{
+			desc: "Subscript: glucose formula with single-tilde strikethrough with spaces",
+			md: `C~6~H~12~O~6~ ~is not~ is critical for life`,
+			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> <del>is not</del> critical for life</p>`,
+		},
+		{
+			desc: "Subscript: glucose formula with dbl-tilde strikethrough",
+			md: `C~6~H~12~O~6~ is ~~not~~ critical for life`,
+			html: `<p>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> is <del>not</del> critical for life</p>`,
+		},
+		{
+			desc: "Subscript: glucose formula with emphasis (strong)",
+			md: `**C~6~H~12~O~6~** is **critical** for life`,
+			html: `<p><strong>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub></strong> is <strong>critical</strong> for life</p>`,
+		},
+		{
+			desc: "Subscript: cannot have spaces inside subscript anywhere",
+			md: `C~6 0~H~12 a1~O~ 6 ~ ~is not~ is critical for life`,
+			html: `<p>C<del>6 0</del>H<del>12 a1</del>O~ 6 ~ <del>is not</del> is critical for life</p>`,
+		},
+		// {
+		// 	desc: "",
+		// 	md: ``,
+		// 	html: ``,
+		// },
+		// {
+		// 	desc: "",
+		// 	md: ``,
+		// 	html: ``,
+		// },
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			testutil.DoTestCase(mdTest, testutil.MarkdownTestCase{
+				Description: tc.desc,
+				Markdown:    tc.md,
+				Expected:    tc.html,
+			}, t)
+		})
+	}
+
+}
