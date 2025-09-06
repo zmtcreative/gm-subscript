@@ -113,9 +113,6 @@ func TestSubscriptCore(t *testing.T) {
 			extension.Footnote,
 			NewSubscript(),
 		),
-		goldmark.WithRendererOptions(
-			html.WithUnsafe(),
-		),
 	)
 
 	testCases := []TestCase{
@@ -225,11 +222,81 @@ func TestSubscriptCore(t *testing.T) {
 			md: `Foo~1,2~ + Bar~(test)~ - Baz~[abc]~ * Quux~{xyz}~ < Zzz~<tag>~`,
 			html: `<p>Foo<sub>1,2</sub> + Bar<sub>(test)</sub> - Baz<sub>[abc]</sub> * Quux<sub>{xyz}</sub> &lt; Zzz<sub>&lt;tag&gt;</sub></p>`,
 		},
+		// {
+		// 	desc: "",
+		// 	md: ``,
+		// 	html: ``,
+		// },
+		// {
+		// 	desc: "",
+		// 	md: ``,
+		// 	html: ``,
+		// },
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			testutil.DoTestCase(mdTest, testutil.MarkdownTestCase{
+				Description: tc.desc,
+				Markdown:    tc.md,
+				Expected:    tc.html,
+			}, t)
+		})
+	}
+
+}
+
+func TestSubscriptHTMLEntities(t *testing.T) {
+	// Because extension.GFM enables strikethrough by default, we need to include it here.
+	// If we don't, we won't be doing a reliable test to make sure subscript and
+	// strikethrough work together properly.
+	mdTest := goldmark.New(
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.DefinitionList,
+			extension.Footnote,
+			NewSubscript(),
+		),
+		goldmark.WithRendererOptions(
+			html.WithUnsafe(),
+		),
+	)
+
+	testCases := []TestCase{
 		{
-			desc: "Subscript: Drake equation",
+			desc: "Subscript: Drake equation (direct Unicode char)",
+			md: `- N = R~🞯~ x f~p~ x n~e~ x f~l~ x f~i~ x f~c~ x L`,
+			html: `<ul>
+<li>N = R<sub>🞯</sub> x f<sub>p</sub> x n<sub>e</sub> x f<sub>l</sub> x f<sub>i</sub> x f<sub>c</sub> x L</li>
+</ul>`,
+		},
+		{
+			desc: "Subscript: Drake equation (HTML entity)",
 			md: `- N = R~&#x1f7af;~ x f~p~ x n~e~ x f~l~ x f~i~ x f~c~ x L`,
-			// md: `- N = R~&#x2731;~ x f~p~ x n~e~ x f~l~ x f~i~ x f~c~ x L`,
-			html: ``,
+			html: `<ul>
+<li>N = R<sub>🞯</sub> x f<sub>p</sub> x n<sub>e</sub> x f<sub>l</sub> x f<sub>i</sub> x f<sub>c</sub> x L</li>
+</ul>`,
+		},
+		{
+			desc: "Subscript: Drake equation (HTML entity + e)",
+			md: `- N = R~&#x1f7af;e~ x f~p~ x n~e~ x f~l~ x f~i~ x f~c~ x L`,
+			html: `<ul>
+<li>N = R<sub>🞯e</sub> x f<sub>p</sub> x n<sub>e</sub> x f<sub>l</sub> x f<sub>i</sub> x f<sub>c</sub> x L</li>
+</ul>`,
+		},
+		{
+			desc: "Subscript: Drake equation (p + HTML entity)",
+			md: `- N = R~p&#x1f7af;~ x f~p~ x n~e~ x f~l~ x f~i~ x f~c~ x L`,
+			html: `<ul>
+<li>N = R<sub>p🞯</sub> x f<sub>p</sub> x n<sub>e</sub> x f<sub>l</sub> x f<sub>i</sub> x f<sub>c</sub> x L</li>
+</ul>`,
+		},
+		{
+			desc: "Subscript: Drake equation (p + HTML entity + e)",
+			md: `- N = R~p&#x1f7af;e~ x f~p~ x n~e~ x f~l~ x f~i~ x f~c~ x L`,
+			html: `<ul>
+<li>N = R<sub>p🞯e</sub> x f<sub>p</sub> x n<sub>e</sub> x f<sub>l</sub> x f<sub>i</sub> x f<sub>c</sub> x L</li>
+</ul>`,
 		},
 		// {
 		// 	desc: "",
