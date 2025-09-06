@@ -5,6 +5,7 @@ import (
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer/html"
 	"github.com/yuin/goldmark/testutil"
 )
 
@@ -112,6 +113,9 @@ func TestSubscriptCore(t *testing.T) {
 			extension.Footnote,
 			NewSubscript(),
 		),
+		goldmark.WithRendererOptions(
+			html.WithUnsafe(),
+		),
 	)
 
 	testCases := []TestCase{
@@ -186,31 +190,47 @@ func TestSubscriptCore(t *testing.T) {
 			html: `<p>H <del>2</del> O</p>`,
 		},
 		{
-			// NOTE: This is the correct output! Subscripts cannot have spaces inside them,
-			// so the '~6 ' is invalid, and since strikethrough doesn't allow trailing spaces, it
-			// just renders as '~6 ' in the output.
-			// Now, the '~H~' is not a valid subscript (it cannot be preceded by whitespace), so it
-			// gets rendered as a strikethrough.
-			// Next, the ' 12' is just normal text at this point, so it is rendered as normal text.
-			// Then, the '~O~' (which is preceded by the '2') is a valid subscript, so it gets rendered as such.
-			// Finally, the ' 6 ~' is just normal text at this point, so is rendered as normal text.
+			// NOTE: This is the correct output!
+			// The subscript parser runs first, so any valid subscripts WILL be processed as subscripts.
+			// Because neither strikethrough nor subscript allow leading or trailing spaces inside their delimiters,
+			// any tildes with a space before or after it is just treated as a normal character.
+			// Since THIS test ends with ' ~', the final tilde is just treated as a normal character.
 			desc: "Subscript: glucose formula with spaces inside subscript",
 			md: `C~6 ~H~ 12~O~ 6 ~`,
 			html: `<p>C~6 <del>H</del> 12<sub>O</sub> 6 ~</p>`,
 		},
 		{
-			// NOTE: This is the correct output! Subscripts cannot have spaces inside them,
-			// so this gets treated similar to the last test case, except the outer strikethrough
+			// NOTE: This is the correct output!
+			// The subscript parser runs first, so any valid subscripts WILL be processed as subscripts.
+			// The only difference between this and the last test case is that this one ends with '6~' instead of '6 ~'.
+			// Since the space is no longer between the final '6' and the final '~', and the first tilde after the 'C'
+			// at the beginning of the line is followed by a non-space (the '6'), Goldmark will process everything,
+			// including the previously rendered subscripts and strikethroughs as another strikethrough for the
+			// entire line EXCEPT the 'C' at the beginning of the line.
+			desc: "Subscript: glucose formula with spaces inside subscript",
+			md: `C~6 ~H~ 12~O~ 6~`,
+			html: `<p>C<del>6 <del>H</del> 12<sub>O</sub> 6</del></p>`,
+		},
+		{
+			// NOTE: This is the correct output!
+			// Subscripts cannot have spaces inside them,
+			// so this gets treated similar to the last test case, except the outer double-tilde strikethrough
 			// gets processed and strikes through everything inside it, even the valid subscript.
 			desc: "Subscript: glucose formula with spaces inside subscript",
 			md: `~~C~6 ~H~ 12~O~ 6~~`,
 			html: `<p><del>C~6 <del>H</del> 12<sub>O</sub> 6</del></p>`,
 		},
-		// {
-		// 	desc: "Subscript: cannot have spaces inside subscript anywhere",
-		// 	md: `C~6 0~H~12 a1~O~ 6 ~ ~is not~ is critical for life`,
-		// 	html: `<p>C<del>6 0</del>H<del>12 a1</del>O~ 6 ~ <del>is not</del> is critical for life</p>`,
-		// },
+		{
+			desc: "Subscript: other characters allowed inside subscript",
+			md: `Foo~1,2~ + Bar~(test)~ - Baz~[abc]~ * Quux~{xyz}~ < Zzz~<tag>~`,
+			html: `<p>Foo<sub>1,2</sub> + Bar<sub>(test)</sub> - Baz<sub>[abc]</sub> * Quux<sub>{xyz}</sub> &lt; Zzz<sub>&lt;tag&gt;</sub></p>`,
+		},
+		{
+			desc: "Subscript: Drake equation",
+			md: `- N = R~&#x1f7af;~ x f~p~ x n~e~ x f~l~ x f~i~ x f~c~ x L`,
+			// md: `- N = R~&#x2731;~ x f~p~ x n~e~ x f~l~ x f~i~ x f~c~ x L`,
+			html: ``,
+		},
 		// {
 		// 	desc: "",
 		// 	md: ``,
