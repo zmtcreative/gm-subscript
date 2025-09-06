@@ -102,18 +102,14 @@ func (s *subscriptParser) Parse(parent ast.Node, block text.Reader, pc parser.Co
 		}
 	}
 
-	// Check first character requirements
+	// Check first character requirements: allow any non-whitespace character except tilde
 	firstChar := rune(content[0])
-	if !isValidFirstChar(firstChar) {
+	if firstChar == '~' {
 		return nil
 	}
 
-	// Check remaining characters
-	for i := 1; i < len(content); i++ {
-		if !isValidSubsequentChar(rune(content[i])) {
-			return nil
-		}
-	}
+	// All subsequent characters are allowed except tilde (handled by finding closing tilde above)
+	// No additional character validation needed since whitespace is already checked above
 
 	// Create the subscript node
 	node := NewSubscriptNode()
@@ -135,23 +131,6 @@ func (s *subscriptParser) Parse(parent ast.Node, block text.Reader, pc parser.Co
 // CloseBlock implements parser.InlineParser.CloseBlock.
 func (s *subscriptParser) CloseBlock(parent ast.Node, pc parser.Context) {
 	// nothing to do
-}
-
-// isValidFirstChar checks if a character is valid as the first character of subscript
-func isValidFirstChar(r rune) bool {
-	return unicode.IsLetter(r) || unicode.IsDigit(r) ||
-		r == '(' || r == '{' || r == '[' || r == '<' ||
-		r == '-' || r == '+'
-}
-
-// isValidSubsequentChar checks if a character is valid as a subsequent character in subscript
-func isValidSubsequentChar(r rune) bool {
-	return unicode.IsLetter(r) || unicode.IsDigit(r) ||
-		r == '(' || r == ')' ||
-		r == '{' || r == '}' ||
-		r == '[' || r == ']' ||
-		r == '<' || r == '>' ||
-		r == '-' || r == '+' || r == ','
 }
 
 // SubscriptHTMLRenderer is a renderer.NodeRenderer implementation that renders Subscript nodes.
