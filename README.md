@@ -1,4 +1,4 @@
-d# Goldmark Subscript Extension
+# Goldmark Subscript Extension
 
 <!-- markdownlint-disable MD033 -->
 
