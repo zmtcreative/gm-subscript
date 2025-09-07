@@ -98,6 +98,16 @@ func TestGoldmarkOnly(t *testing.T) {
 			md:   `H **~~2~~** O`,
 			html: `<p>H <strong><del>2</del></strong> O</p>`,
 		},
+		{
+			desc: "Goldmark only: double-tilde strikethrough can start inside text",
+			md:   `body~~text~~`,
+			html: `<p>body<del>text</del></p>`,
+		},
+		{
+			desc: "Goldmark only: single-tilde strikethrough can start inside text",
+			md:   `body~text~`,
+			html: `<p>body<del>text</del></p>`,
+		},
 		// {
 		// 	desc: "",
 		// 	md: ``,
@@ -135,6 +145,21 @@ func TestSubscriptCore(t *testing.T) {
 			desc: "Subscript: basic test",
 			md:   `H~2~O`,
 			html: `<p>H<sub>2</sub>O</p>`,
+		},
+		{
+			desc: "Subscript: basic test no nested tildes",
+			md:   `H~2~O~`,
+			html: `<p>H<sub>2</sub>O~</p>`,
+		},
+		{
+			desc: "Subscript: basic test no nested tildes",
+			md:   `~H~2~O~`,
+			html: `<p><del>H<sub>2</sub>O</del></p>`,
+		},
+		{
+			desc: "Subscript: basic test with adjacent subscripts",
+			md:   `H~2~~O~`,
+			html: `<p>H<sub>2</sub><sub>O</sub></p>`,
 		},
 		{
 			desc: "Subscript: Subscript with special characters",
@@ -296,6 +321,16 @@ func TestSubscriptCore(t *testing.T) {
 			desc: "Subscript: cannot be preceded by whitespace",
 			md:   `NH~4~ with ~subscript~ and ~~strikethrough~~`,
 			html: `<p>NH<sub>4</sub> with <del>subscript</del> and <del>strikethrough</del></p>`,
+		},
+		{
+			desc: "Subscript: single-tilde subscript can start inside text",
+			md:   `body~text~`,
+			html: `<p>body<sub>text</sub></p>`,
+		},
+		{
+			desc: "Subscript: double-tilde strikethrough can start inside text",
+			md:   `body~~text~~`,
+			html: `<p>body<del>text</del></p>`,
 		},
 		// {
 		// 	desc: "",
